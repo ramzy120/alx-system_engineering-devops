@@ -7,36 +7,23 @@ import sys
 
 
 if __name__ == '__main__':
-    if len(sys.argv) != 2:
-        print("Usage: python script_name.py <employee_id>")
-        sys.exit(1)
-
-    employee_id = sys.argv[1]
-    base_url = "https://jsonplaceholder.typicode.com/users"
-    url = f"{base_url}/{employee_id}"
+    employeeId = sys.argv[1]
+    baseUrl = "https://jsonplaceholder.typicode.com/users"
+    url = baseUrl + "/" + employeeId
 
     response = requests.get(url)
-    if response.status_code != 200:
-        print(f"Failed to retrieve employee data. Status code: {response.status_code}")
-        sys.exit(1)
-
     username = response.json().get('username')
 
-    todo_url = f"{base_url}/{employee_id}/todos"
-    response = requests.get(todo_url)
-    if response.status_code != 200:
-        print(f"Failed to retrieve todo data. Status code: {response.status_code}")
-        sys.exit(1)
-
+    todoUrl = url + "/todos"
+    response = requests.get(todoUrl)
     tasks = response.json()
 
-    dictionary = {employee_id: []}
+    dictionary = {employeeId: []}
     for task in tasks:
-        dictionary[employee_id].append({
+        dictionary[employeeId].append({
             "task": task.get('title'),
             "completed": task.get('completed'),
             "username": username
         })
-
-    with open(f'{employee_id}.json', 'w') as file:
-        json.dump(dictionary, file, indent=4)
+    with open('{}.json'.format(employeeId), 'w') as filename:
+        json.dump(dictionary, filename)
