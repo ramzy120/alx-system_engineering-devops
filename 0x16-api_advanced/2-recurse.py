@@ -1,61 +1,65 @@
 #!/usr/bin/python3
 """
-Script to query a list of all hot posts on a given Reddit subreddit.
+Task 2. Recurse it!
 """
 
 import requests
+import sys
 
 
-def recurse(subreddit, hot_list=[], after="", count=0):
-    """
-    Recursively retrieves a list of titles of all hot posts
-    on a given subreddit.
+def recurse(subreddit, hot_list=[], after=None):
+    """Recursively retrieves all hot article titles for a given subreddit."""
+    # Set the base URL for the subreddit's hot posts
+    url = f"https://www.reddit.com/r/{subreddit}/hot.json"
 
-    Args:
-        subreddit (str): The name of the subreddit.
-        hot_list (list, optional): List to store the post titles.
-                                    Default is an empty list.
-        after (str, optional): Token used for pagination.
-                                Default is an empty string.
-        count (int, optional): Current count of retrieved posts. Default is 0.
+    # Set up parameters for pagination
+    params = {"limit": 100}
+    if after:
+        params["after"] = after
 
-    Returns:
-        list: A list of post titles from the hot section of the subreddit.
-    """
-    # Construct the URL for the subreddit's hot posts in JSON format
-    url = "https://www.reddit.com/r/{}/hot/.json".format(subreddit)
+    # Set up headers to include a custom User-Agent
+    headers = {"User-Agent": "Mozilla/5.0"}
 
-    # Define headers for the HTTP request, including User-Agent
-    headers = {
-        "User-Agent": "linux:0x16.api.advanced:v1.0.0 (by /u/bdov_)"
-    }
+    try:
+        # Make the request to the Reddit API
+        response = requests.get(
+            url,
+            headers=headers,
+            params=params,
+            allow_redirects=False
+        )
 
-    # Define parameters for the request, including pagination and limit
-    params = {
-        "after": after,
-        "count": count,
-        "limit": 100
-    }
+        # Check if the response status code indicates success
+        if response.status_code == 200:
+            # Parse the JSON data
+            data = response.json()
 
-    # Send a GET request to the subreddit's hot posts page
-    response = requests.get(url, headers=headers, params=params,
-                            allow_redirects=False)
+            # Extract titles and add them to the hot_list
+            for post in data['data']['children']:
+                hot_list.append(post['data']['title'])
 
-    # Check if the response status code indicates a not-found error (404)
-    if response.status_code == 404:
+            # Check if there is another page (pagination)
+            after = data['data']['after']
+            if after:
+                # Recursively call the function to get the next page
+                return recurse(subreddit, hot_list, after)
+            else:
+                # If no more pages, return the full list of titles
+                return hot_list
+        else:
+            # If status code is not 200, return None
+            return None
+    except requests.RequestException:
+        # In case of a request exception, return None
         return None
-    # Parse the JSON response and extract relevant data
-    results = response.json().get("data")
-    after = results.get("after")
-    count += results.get("dist")
 
-    # Append post titles to the hot_list
-    for c in results.get("children"):
-        hot_list.append(c.get("data").get("title"))
 
-    # If there are more posts to retrieve, recursively call the function
-    if after is not None:
-        return recurse(subreddit, hot_list, after, count)
-
-    # Return the final list of hot post titles
-    return hot_list
+if __name__ == '__main__':
+    if len(sys.argv) < 2:
+        print("Please pass an argument for the subreddit to search.")
+    else:
+        result = recurse(sys.argv[1])
+        if result is not None:
+            print(len(result))
+        else:
+            print("None")
