@@ -3,8 +3,8 @@
 Task 0. How many subs?
 """
 
-import requests
-import sys
+from requests import get, RequestException
+from sys import argv
 
 
 def number_of_subscribers(subreddit):
@@ -17,7 +17,7 @@ def number_of_subscribers(subreddit):
 
     try:
         # Make the request to the Reddit API
-        response = requests.get(url, headers=headers, allow_redirects=False)
+        response = get(url, headers=headers, allow_redirects=False)
 
         # Check if the response status code indicates success
         if response.status_code == 200:
@@ -28,13 +28,13 @@ def number_of_subscribers(subreddit):
         else:
             # If status code is not 200, return 0
             return 0
-    except requests.RequestException:
+    except RequestException:
         # In case of a request exception, return 0
         return 0
 
 
 if __name__ == '__main__':
-    if len(sys.argv) < 2:
+    if len(argv) < 2:
         print("Please pass an argument for the subreddit to search.")
     else:
         print("{:d}".format(number_of_subscribers(sys.argv[1])))
